@@ -72,7 +72,17 @@ echo "Running nix flake check (post-update)..."
 nix flake check --keep-going
 
 echo "Switching system to new configuration..."
-sudo nixos-rebuild switch --flake "$flake_ref" \
-  --option extra-git-config "safe.directory=${script_dir}"
+tmp_git_config="$(mktemp -t nixos-update-gitconfig.XXXXXX)"
+cleanup_git_config() { rm -f "$tmp_git_config"; }
+trap cleanup_git_config EXIT
+cat >"$tmp_git_config" <<EOF
+[safe]
+	directory = $script_dir
+EOF
+
+sudo env \
+  GIT_CONFIG_GLOBAL="$tmp_git_config" \
+  GIT_CONFIG_SYSTEM=/dev/null \
+  nixos-rebuild switch --flake "$flake_ref"
 
 echo "nixos-update complete."
