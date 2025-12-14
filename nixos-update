@@ -72,10 +72,7 @@ echo "Running nix flake check (post-update)..."
 nix flake check --keep-going
 
 echo "Switching system to new configuration..."
-sudo env \
-  GIT_CONFIG_COUNT=1 \
-  GIT_CONFIG_KEY_0=safe.directory \
-  GIT_CONFIG_VALUE_0="$script_dir" \
-  nixos-rebuild switch --flake "$flake_ref"
+sudo nixos-rebuild switch --flake "$flake_ref" \
+  --option extra-git-config "safe.directory=${script_dir}"
 
 echo "nixos-update complete."
