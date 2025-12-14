@@ -6,10 +6,37 @@ script_path="$(readlink -f -- "${BASH_SOURCE[0]}")"
 script_dir="$(cd -- "$(dirname -- "$script_path")" && pwd)"
 
 pushd "$script_dir" >/dev/null
-trap 'popd >/dev/null' EXIT
+tmp_git_config="$(mktemp -t nixos-update-gitconfig.XXXXXX)"
+cleanup_git_config() { rm -f "$tmp_git_config"; }
+cleanup() {
+  cleanup_git_config
+  popd >/dev/null
+}
+trap cleanup EXIT
+
+cat >"$tmp_git_config" <<EOF
+[safe]
+	directory = $script_dir
+EOF
+export GIT_CONFIG_GLOBAL="$tmp_git_config"
+export GIT_CONFIG_SYSTEM=/dev/null
+
+usage() {
+  cat <<EOF
+Usage: ${0##*/} [--no-update] [host]
+
+Options:
+  --no-update  Rebuild without updating flake inputs (use existing lockfile)
+  -h, --help   Show this help
+
+Environment:
+  NIXOS_HOST   Override host selection
+EOF
+  exit "${1:-0}"
+}
 
 select_host() {
-  local requested="${1:-}"
+  local requested="${NIXOS_HOST:-${1:-}}"
   local sys_hostname
   sys_hostname="$(hostname -s)"
 
@@ -30,6 +57,7 @@ select_host() {
     [[ -z "$attr" ]] && continue
     if [[ "$(nix eval --raw --impure "${script_dir}#nixosConfigurations.${attr}.config.networking.hostName")" == "$sys_hostname" ]]; then
       echo "$attr"
+      echo "Auto-selected host '${attr}' for hostname '${sys_hostname}'." >&2
       return
     fi
   done
@@ -41,7 +69,11 @@ select_host() {
 
   if [[ $count -eq 1 ]]; then
     for attr in "${attrs[@]}"; do
-      [[ -n "$attr" ]] && { echo "$attr"; return; }
+      if [[ -n "$attr" ]]; then
+        echo "$attr"
+        echo "Auto-selected sole available host '${attr}'." >&2
+        return
+      fi
     done
   fi
 
@@ -56,33 +88,53 @@ select_host() {
   exit 1
 }
 
-host="$(select_host "${1:-}")"
+do_update=true
+host_arg=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --no-update)
+      do_update=false
+      shift
+      ;;
+    -h|--help)
+      usage 0
+      ;;
+    *)
+      if [[ -n "$host_arg" ]]; then
+        echo "Only one host may be specified." >&2
+        usage 1
+      fi
+      host_arg="$1"
+      shift
+      ;;
+  esac
+done
+
+host="$(select_host "$host_arg")"
 flake_attr="nixosConfigurations.${host}.config.system.build.toplevel"
 flake_ref="${script_dir}#${host}"
 
 echo "Using nixosConfiguration '${host}' (hostname: $(hostname -s))"
 
-echo "Running nix flake check (pre-update)..."
-nix flake check --keep-going
+if [[ "$do_update" == true ]]; then
+  echo "Running nix flake check (pre-update)..."
+  nix flake check --keep-going
 
-echo "Updating flake inputs..."
-nix flake update
+  echo "Updating flake inputs..."
+  nix flake update
 
-echo "Running nix flake check (post-update)..."
-nix flake check --keep-going
+  echo "Running nix flake check (post-update)..."
+  nix flake check --keep-going
+else
+  echo "Skipping flake update (--no-update). Running nix flake check..."
+  nix flake check --keep-going
+fi
 
 echo "Switching system to new configuration..."
-tmp_git_config="$(mktemp -t nixos-update-gitconfig.XXXXXX)"
-cleanup_git_config() { rm -f "$tmp_git_config"; }
-trap cleanup_git_config EXIT
-cat >"$tmp_git_config" <<EOF
-[safe]
-	directory = $script_dir
-EOF
-
 sudo env \
   GIT_CONFIG_GLOBAL="$tmp_git_config" \
   GIT_CONFIG_SYSTEM=/dev/null \
-  nixos-rebuild switch --flake "$flake_ref"
+  nixos-rebuild switch --flake "$flake_ref" -L
 
 echo "nixos-update complete."
