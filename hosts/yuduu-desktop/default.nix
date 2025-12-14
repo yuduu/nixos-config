@@ -7,4 +7,6 @@
   ];
 
   networking.hostName = "yuduu-desktop";
+
+  system.stateVersion = "25.05";
 }

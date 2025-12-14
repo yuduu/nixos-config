@@ -3,7 +3,6 @@
 {
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_zen;
 
   networking.networkmanager.enable = true;
 
@@ -81,6 +80,7 @@
     dates = "weekly";
     options = "--delete-older-than 30d";
   };
+  nix.gc.persistent = true;
   nix.optimise.automatic = true;
 
   hardware.enableRedistributableFirmware = true;
@@ -94,6 +94,10 @@
     curl
     wget
     htop
+    (writeShellScriptBin "nixos-update" ''
+      # Wrapper to run the repo script from a fixed path; update if the repo moves.
+      exec /home/yuduu/nixos-config/nixos-update "$@"
+    '')
     (zed-editor.fhsWithPackages (
       pkgs: with pkgs; [
         openssl
@@ -114,5 +118,4 @@
     ];
   };
 
-  system.stateVersion = "25.05";
 }

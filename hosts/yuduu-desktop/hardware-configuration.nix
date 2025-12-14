@@ -5,7 +5,7 @@
 
   # Placeholder hardware config for yuduu-desktop.
   # Replace with the output of `nixos-generate-config --show-hardware-config`
-  # from the target machine.
+  # from the target machine before the first build.
   boot.initrd.availableKernelModules = [
     "xhci_pci"
     "ahci"
