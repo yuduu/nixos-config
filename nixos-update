@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+script_path="$(readlink -f -- "${BASH_SOURCE[0]}")"
+script_dir="$(cd -- "$(dirname -- "$script_path")" && pwd)"
+
+pushd "$script_dir" >/dev/null
+trap 'popd >/dev/null' EXIT
+
+select_host() {
+  local requested="${1:-}"
+  local sys_hostname
+  sys_hostname="$(hostname -s)"
+
+  if [[ -n "$requested" ]]; then
+    echo "$requested"
+    return
+  fi
+
+  local attrs_raw
+  if ! attrs_raw="$(nix eval --raw --impure --expr "let flake = builtins.getFlake \"path:${script_dir}\"; in builtins.concatStringsSep \"\n\" (builtins.attrNames flake.nixosConfigurations)")"; then
+    echo "Failed to enumerate nixosConfigurations via nix eval" >&2
+    exit 1
+  fi
+  mapfile -t attrs <<<"$attrs_raw"
+
+  local attr
+  for attr in "${attrs[@]}"; do
+    [[ -z "$attr" ]] && continue
+    if [[ "$(nix eval --raw --impure "${script_dir}#nixosConfigurations.${attr}.config.networking.hostName")" == "$sys_hostname" ]]; then
+      echo "$attr"
+      return
+    fi
+  done
+
+  local count=0
+  for attr in "${attrs[@]}"; do
+    [[ -n "$attr" ]] && ((count++))
+  done
+
+  if [[ $count -eq 1 ]]; then
+    for attr in "${attrs[@]}"; do
+      [[ -n "$attr" ]] && { echo "$attr"; return; }
+    done
+  fi
+
+  echo "Unable to map current hostname '${sys_hostname}' to a nixosConfiguration." >&2
+  if [[ $count -gt 0 ]]; then
+    echo "Available nixosConfigurations:" >&2
+    for attr in "${attrs[@]}"; do
+      [[ -n "$attr" ]] && printf '  - %s\n' "$attr" >&2
+    done
+  fi
+  echo "Pass the desired host explicitly, e.g. ./nixos-update <host>" >&2
+  exit 1
+}
+
+host="$(select_host "${1:-}")"
+flake_attr="nixosConfigurations.${host}.config.system.build.toplevel"
+flake_ref="${script_dir}#${host}"
+
+echo "Using nixosConfiguration '${host}' (hostname: $(hostname -s))"
+
+echo "Running nix flake check (pre-update)..."
+nix flake check --keep-going
+
+echo "Updating flake inputs..."
+nix flake update
+
+echo "Running nix flake check (post-update)..."
+nix flake check --keep-going
+
+echo "Switching system to new configuration..."
+sudo nixos-rebuild switch --flake "$flake_ref"
+
+echo "nixos-update complete."

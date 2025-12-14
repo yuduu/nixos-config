@@ -1,0 +1,14 @@
+# Nix build outputs and gc roots
+result
+result-*
+*.drv
+*.qcow2
+
+# direnv
+.direnv/
+.envrc
+
+# Editor swap files
+*.swp
+*.swo
+*~
