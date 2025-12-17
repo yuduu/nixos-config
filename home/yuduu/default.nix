@@ -2,20 +2,25 @@
 
 let
   jsonFormat = pkgs.formats.json { };
+
   zedSettings = {
     ui_font_size = 16;
     buffer_font_size = 16;
+
     theme = {
       mode = "system";
       light = "One Light";
       dark = "Ayu Dark";
     };
+
+    # Load environment variables (e.g. OPENAI_API_KEY) into Zed
     load_env = true;
+
     extensions = [
       "python"
       "go"
       "nix"
-      "codex-cli"
+      # No need for "codex-cli" here; Zed’s Codex integration isn't a marketplace extension
     ];
   };
 in
@@ -29,7 +34,14 @@ in
     brave
     nil
     nixd
-    zed-editor
+
+    # IMPORTANT: Use FHS-wrapped Zed on NixOS so downloaded agents can run
+    (zed-editor.fhsWithPackages (
+      pkgs: with pkgs; [
+        openssl
+        zlib
+      ]
+    ))
   ];
 
   home.file.".config/zed/settings.json" = {
