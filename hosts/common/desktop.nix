@@ -98,12 +98,6 @@
       # Wrapper to run the repo script from a fixed path; update if the repo moves.
       exec /home/yuduu/nixos-config/nixos-update "$@"
     '')
-    (zed-editor.fhsWithPackages (
-      pkgs: with pkgs; [
-        openssl
-        zlib
-      ]
-    ))
   ];
 
   fonts = {

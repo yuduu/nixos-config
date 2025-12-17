@@ -10,7 +10,13 @@ let
       light = "One Light";
       dark = "Ayu Dark";
     };
-    extensions = [ "nix" ];
+    load_env = true;
+    extensions = [
+      "python"
+      "go"
+      "nix"
+      "codex-cli"
+    ];
   };
 in
 {
@@ -23,6 +29,7 @@ in
     brave
     nil
     nixd
+    zed-editor
   ];
 
   home.file.".config/zed/settings.json" = {
