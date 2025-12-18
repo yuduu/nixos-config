@@ -34,6 +34,7 @@ in
     brave
     nil
     nixd
+    home-manager
 
     # IMPORTANT: Use FHS-wrapped Zed on NixOS so downloaded agents can run
     (zed-editor.fhsWithPackages (
@@ -47,6 +48,12 @@ in
   home.file.".config/zed/settings.json" = {
     source = jsonFormat.generate "zed-settings.json" zedSettings;
     force = true;
+  };
+
+  dconf.settings = {
+    "org/gnome/desktop/wm/preferences" = {
+      button-layout = "appmenu:minimize,maximize,close";
+    };
   };
 
   home.stateVersion = "25.05";
