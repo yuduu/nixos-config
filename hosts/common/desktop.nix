@@ -28,6 +28,9 @@
     theme = "spinner";
   };
 
+  # Ensure Xbox 360 wireless receiver support via the xpad driver.
+  boot.kernelModules = [ "xpad" ];
+
   boot.consoleLogLevel = 3;
   boot.initrd.verbose = false;
   boot.kernelParams = [
@@ -51,6 +54,20 @@
   services.power-profiles-daemon.enable = true;
   services.upower.enable = true;
   services.acpid.enable = true;
+
+  hardware.graphics = {
+    enable = true;
+    enable32Bit = true;
+  };
+  hardware.steam-hardware.enable = true;
+
+  programs.steam = {
+    enable = true;
+    remotePlay.openFirewall = true;
+    dedicatedServer.openFirewall = true;
+    localNetworkGameTransfers.openFirewall = true;
+    extraCompatPackages = with pkgs; [ proton-ge-bin ];
+  };
 
   security.rtkit.enable = true;
   services.pipewire = {
