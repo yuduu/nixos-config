@@ -68,6 +68,7 @@
     localNetworkGameTransfers.openFirewall = true;
     extraCompatPackages = with pkgs; [ proton-ge-bin ];
   };
+  programs.mangohud.enable = true;
 
   security.rtkit.enable = true;
   services.pipewire = {
