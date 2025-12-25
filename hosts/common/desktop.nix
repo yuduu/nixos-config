@@ -44,6 +44,17 @@
 
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
+  services.displayManager.autoLogin = {
+    enable = true;
+    user = "yuduu";
+  };
+  services.xserver.desktopManager.gnome.extraGSettingsOverrides = ''
+    [org.gnome.desktop.interface]
+    color-scheme='prefer-dark'
+
+    [org.gnome.desktop.screensaver]
+    lock-enabled=false
+  '';
 
   services.xserver.xkb.layout = "de";
   console.keyMap = "de";
@@ -111,6 +122,8 @@
     curl
     wget
     htop
+    gnomeExtensions.caffeine
+    pkgs.gnomeExtensions.appindicator
     (writeShellScriptBin "nixos-update" ''
       # Wrapper to run the repo script from a fixed path; update if the repo moves.
       exec /home/yuduu/nixos-config/nixos-update "$@"
