@@ -1,6 +1,7 @@
 # Agent Guide for `nixos-config`
 
-- **Purpose**: Keep host and Home Manager configs predictable, safe, and easy to update.
+- **Purpose**: Enable safe, reproducible changes to hosts and Home Manager with minimal risk.
+- **Quick start**: `nix develop` then `alejandra .` then `statix check`, then switch with `./nixos-update`.
 - **Layout recap**: `flake.nix` wires hosts + Home Manager; `hosts/common` holds shared desktop defaults; `hosts/<host>/` adds hardware + host-specific bits; `home/yuduu` is the user module; `nixos-update` updates inputs, runs checks, and switches.
 
 ## Daily workflow
@@ -11,13 +12,9 @@
 - When adding a host: generate hardware config, set `networking.hostName`, import `../common/desktop.nix`, and register the host in `flake.nix`.
 
 ## Editing guidelines
+- Do: keep shared bits in `hosts/common`; use `rg` for searching; add short comments only when logic isn’t obvious.
+- Avoid: editing generated hardware files; `lib.mkDefault`/`lib.mkForce` unless necessary; secrets in the repo; destructive git commands; global replace without review.
 - Stay in ASCII unless the file already uses other characters.
-- Don’t edit generated hardware files except to regenerate them.
-- Prefer `lib.mkDefault`/`lib.mkForce` only when necessary; keep shared bits in `hosts/common`.
-- Keep secrets out of the repo; use environment variables or external files.
-- Comments: only where logic isn’t obvious; keep them short.
-- Avoid destructive git commands; the worktree may contain user changes.
-- Use `rg` for searching; avoid global replace without review.
 
 ## Validation checklist
 - `alejandra .`
