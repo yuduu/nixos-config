@@ -1,6 +1,7 @@
 { lib, pkgs, ... }:
 
 {
+  boot.kernelPackages = pkgs.linuxPackages_zen;
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
@@ -28,9 +29,6 @@
     theme = "spinner";
   };
 
-  # Ensure Xbox 360 wireless receiver support via the xpad driver.
-  boot.kernelModules = [ "xpad" ];
-
   boot.consoleLogLevel = 3;
   boot.initrd.verbose = false;
   boot.kernelParams = [
@@ -48,7 +46,7 @@
     enable = true;
     user = "yuduu";
   };
-  services.xserver.desktopManager.gnome.extraGSettingsOverrides = ''
+  services.desktopManager.gnome.extraGSettingsOverrides = ''
     [org.gnome.desktop.interface]
     color-scheme='prefer-dark'
 
@@ -68,16 +66,6 @@
 
   hardware.graphics = {
     enable = true;
-    enable32Bit = true;
-  };
-  hardware.steam-hardware.enable = true;
-
-  programs.steam = {
-    enable = true;
-    remotePlay.openFirewall = true;
-    dedicatedServer.openFirewall = true;
-    localNetworkGameTransfers.openFirewall = true;
-    extraCompatPackages = with pkgs; [ proton-ge-bin ];
   };
 
   security.rtkit.enable = true;
@@ -122,6 +110,7 @@
     curl
     wget
     htop
+    gnome-extension-manager
     gnomeExtensions.caffeine
     pkgs.gnomeExtensions.appindicator
     (writeShellScriptBin "nixos-update" ''

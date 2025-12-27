@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 
 {
   imports = [
@@ -9,10 +9,10 @@
   networking.hostName = "yuduu-desktop";
 
   # Gaming-specific configuration for this host.
-  boot.kernelModules = [ "xpad" ];
 
   hardware.graphics.enable32Bit = true;
   hardware.steam-hardware.enable = true;
+  hardware.xone.enable = true;
 
   programs.steam = {
     enable = true;
@@ -21,6 +21,12 @@
     localNetworkGameTransfers.openFirewall = true;
     extraCompatPackages = with pkgs; [ proton-ge-bin ];
   };
+
+  boot.extraModulePackages = with config.boot.kernelPackages; [
+    xpad-noone
+    xone
+  ];
+  boot.kernelModules = [ "xpad-noone" "xone" ];
 
   environment.systemPackages = with pkgs; [
     heroic
