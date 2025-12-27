@@ -112,6 +112,7 @@
     htop
     gnome-extension-manager
     gnomeExtensions.caffeine
+    gnomeExtensions.upower-battery
     pkgs.gnomeExtensions.appindicator
     (writeShellScriptBin "nixos-update" ''
       # Wrapper to run the repo script from a fixed path; update if the repo moves.
