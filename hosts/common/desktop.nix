@@ -109,6 +109,7 @@
     git
     curl
     wget
+    ripgrep
     htop
     gnome-extension-manager
     gnomeExtensions.caffeine

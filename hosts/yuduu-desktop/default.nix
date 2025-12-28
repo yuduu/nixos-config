@@ -27,6 +27,12 @@
     xone
   ];
   boot.kernelModules = [ "xpad-noone" "xone" ];
+  boot.blacklistedKernelModules = [ "xpad" ];
+
+  # Keep the Xbox 360 wireless receiver out of USB autosuspend.
+  services.udev.extraRules = ''
+    ACTION=="add|change", SUBSYSTEM=="usb", ATTRS{idVendor}=="045e", ATTRS{idProduct}=="0719", TEST=="power/control", ATTR{power/control}="on"
+  '';
 
   environment.systemPackages = with pkgs; [
     heroic
