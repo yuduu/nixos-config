@@ -32,5 +32,22 @@
     heroic
   ];
 
+  environment.etc = {
+    "xdg/autostart/steam.desktop".text = ''
+      [Desktop Entry]
+      Type=Application
+      Name=Steam
+      Exec=steam -silent
+      X-GNOME-Autostart-enabled=true
+    '';
+    "xdg/autostart/heroic.desktop".text = ''
+      [Desktop Entry]
+      Type=Application
+      Name=Heroic
+      Exec=heroic
+      X-GNOME-Autostart-enabled=true
+    '';
+  };
+
   system.stateVersion = "25.05";
 }
