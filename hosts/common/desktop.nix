@@ -114,6 +114,7 @@
     wget
     ripgrep
     htop
+    usbutils
     gnome-extension-manager
     gnomeExtensions.caffeine
     gnomeExtensions.upower-battery

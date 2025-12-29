@@ -23,15 +23,13 @@
   };
 
   boot.extraModulePackages = with config.boot.kernelPackages; [
-    xpad-noone
     xone
   ];
-  boot.kernelModules = [ "xpad-noone" "xone" ];
-  boot.blacklistedKernelModules = [ "xpad" ];
+  boot.kernelModules = [ "xone" ];
 
-  # Keep the Xbox 360 wireless receiver out of USB autosuspend.
+  # Keep the Xbox Wireless Adapter for Windows out of USB autosuspend.
   services.udev.extraRules = ''
-    ACTION=="add|change", SUBSYSTEM=="usb", ATTRS{idVendor}=="045e", ATTRS{idProduct}=="0719", TEST=="power/control", ATTR{power/control}="on"
+    ACTION=="add|change", SUBSYSTEM=="usb", ATTRS{idVendor}=="045e", ATTRS{idProduct}=="02fe", TEST=="power/control", ATTR{power/control}="on"
   '';
 
   environment.systemPackages = with pkgs; [
