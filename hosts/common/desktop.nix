@@ -63,6 +63,11 @@
   services.printing.enable = true;
   services.fwupd.enable = true;
   services.fstrim.enable = true;
+  security.polkit.enable = true;
+  services.logind.settings.Login = {
+    HandlePowerKey = "suspend";
+    HandleSuspendKey = "suspend";
+  };
   services.power-profiles-daemon.enable = true;
   services.upower.enable = true;
   services.acpid.enable = true;
