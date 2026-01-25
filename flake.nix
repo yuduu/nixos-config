@@ -53,7 +53,6 @@
       );
 
       nixosConfigurations = {
-        lenovo-laptop = mkNixosHost "lenovo-laptop";
         yuduu-desktop = mkNixosHost "yuduu-desktop";
       };
     };

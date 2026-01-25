@@ -5,7 +5,6 @@ NixOS + home-manager configuration for `yuduu`, managed as a flake.
 ## Layout
 
 - `hosts/common`: shared desktop defaults (GNOME, user, base packages).
-- `hosts/lenovo-laptop`: laptop-specific system configuration (imports generated hardware info).
 - `hosts/yuduu-desktop`: workstation system configuration (replace `hardware-configuration.nix` with generated hardware info).
 - `home/yuduu`: Home Manager module for the `yuduu` user.
 - `nixos-update`: helper script that updates inputs, runs sanity checks, and switches the host.
@@ -24,7 +23,6 @@ Update and switch the system with the helper script. It auto-detects the matchin
 
 ```bash
 ./nixos-update            # auto-detect via networking.hostName
-./nixos-update lenovo-laptop
 ./nixos-update yuduu-desktop
 ```
 
