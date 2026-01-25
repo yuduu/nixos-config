@@ -4,12 +4,22 @@ set -euo pipefail
 
 script_path="$(readlink -f -- "${BASH_SOURCE[0]}")"
 script_dir="$(cd -- "$(dirname -- "$script_path")" && pwd)"
+sudo_keepalive_pid=""
+
+if [[ "$script_dir" == *$'\n'* ]]; then
+  echo "Script path contains a newline; refusing to continue for safety." >&2
+  exit 1
+fi
 
 pushd "$script_dir" >/dev/null
 tmp_git_config="$(mktemp -t nixos-update-gitconfig.XXXXXX)"
 cleanup_git_config() { rm -f "$tmp_git_config"; }
 cleanup() {
   cleanup_git_config
+  if [[ -n "$sudo_keepalive_pid" ]]; then
+    kill "$sudo_keepalive_pid" 2>/dev/null || true
+    sudo -k 2>/dev/null || true
+  fi
   popd >/dev/null
 }
 trap cleanup EXIT
@@ -33,6 +43,31 @@ Environment:
   NIXOS_HOST   Override host selection
 EOF
   exit "${1:-0}"
+}
+
+ensure_sudo() {
+  if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
+    return
+  fi
+
+  if ! command -v sudo >/dev/null; then
+    echo "sudo is required but not available." >&2
+    exit 1
+  fi
+
+  echo "Requesting sudo upfront..."
+  sudo -v
+  # Keep sudo alive during long-running update/check steps.
+  ( while true; do sudo -v; sleep 60; done ) &
+  sudo_keepalive_pid=$!
+}
+
+check_repo_permissions() {
+  if find "$script_dir" -xdev -perm -0022 -print -quit | grep -q .; then
+    echo "Refusing to continue: repository contains group/world-writable paths." >&2
+    echo "Fix with: chmod -R go-w \"$script_dir\"" >&2
+    exit 1
+  fi
 }
 
 select_host() {
@@ -116,6 +151,8 @@ flake_attr="nixosConfigurations.${host}.config.system.build.toplevel"
 flake_ref="${script_dir}#${host}"
 
 echo "Using nixosConfiguration '${host}' (hostname: $(hostname -s))"
+check_repo_permissions
+ensure_sudo
 
 if [[ "$do_update" == true ]]; then
   echo "Running nix flake check (pre-update)..."
@@ -132,9 +169,16 @@ else
 fi
 
 echo "Switching system to new configuration..."
-sudo env \
-  GIT_CONFIG_GLOBAL="$tmp_git_config" \
-  GIT_CONFIG_SYSTEM=/dev/null \
-  nixos-rebuild switch --flake "$flake_ref" -L
+if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
+  env \
+    GIT_CONFIG_GLOBAL="$tmp_git_config" \
+    GIT_CONFIG_SYSTEM=/dev/null \
+    nixos-rebuild switch --flake "$flake_ref" -L
+else
+  sudo env \
+    GIT_CONFIG_GLOBAL="$tmp_git_config" \
+    GIT_CONFIG_SYSTEM=/dev/null \
+    nixos-rebuild switch --flake "$flake_ref" -L
+fi
 
 echo "nixos-update complete."
