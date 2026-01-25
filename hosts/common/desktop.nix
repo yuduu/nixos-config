@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ lib, pkgs, inputs, ... }:
 
 {
   boot.kernelPackages = pkgs.linuxPackages_zen;
@@ -124,6 +124,7 @@
     gnomeExtensions.caffeine
     gnomeExtensions.upower-battery
     pkgs.gnomeExtensions.appindicator
+    inputs.opencode.packages.${pkgs.system}.desktop
     (writeShellScriptBin "nixos-update" ''
       # Wrapper to run the repo script from a fixed path; update if the repo moves.
       exec /home/yuduu/nixos-config/nixos-update "$@"
